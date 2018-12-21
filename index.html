@@ -56,7 +56,7 @@
                 num_players : snapshot.child('num_players').val()-1,
                 white_name  : snapshot.child('white_name').val() === localStorage.email ? "" : snapshot.child('white_name').val(),
                 black_name  : snapshot.child('black_name').val() === localStorage.email ? "" : snapshot.child('black_name').val(),
-                status      : localStorage.email === "viewer" ? snapshot.child('status').val() : (snapshot.child('num_players').val()-1 === 0 ? "" : localStorage.email + " has left the game"),
+                status      : localStorage.email === "viewer" ? snapshot.child('status').val() : (snapshot.child('num_players').val()-1 === 0 ? "You are currently alone in the game.. make the first move!. " : localStorage.email + " has left the game"),
                 board_state : snapshot.child('num_players').val()-1 === 0 ? 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1' : snapshot.child('board_state').val(),
                 turn        : snapshot.child('num_players').val()-1 === 0 ? 'white' : turn
             }).then(function(){
@@ -188,11 +188,10 @@ start_game = function(){
 }; // end init()
 var position = 'start';
 var init = function() {
-    if ("undefined" === localStorage.email || localStorage.connected !== "undefined") {
+    if ("undefined" === localStorage.email) {
         location.href = 'login.html';
         return;
     }
-    localStorage.connected = true;
     start_game();
 };
 firebase.database().ref().child('board_state').on('value', function(snapshot) {
