@@ -170,6 +170,11 @@
 
 		firebase.auth().onAuthStateChanged(function(user) {
 			if (user) {
+			    if (localStorage.email !== "undefined") {
+			        alert('you are already connected in this browser');
+			        close();
+			        return;
+				}
 				var displayName = user.displayName;
                 firebase.database().ref().child('num_players').once('value').then(function(snapshot) {
                     console.log('number of players:     ' + snapshot.val());

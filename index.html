@@ -7,6 +7,7 @@
   <title>Chess Template</title>
   <link rel="stylesheet" href="css/chessboard.css" />
   <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" type="text/css" href="vendor/bootstrap/css/bootstrap.min.css">
   <audio>
 	<source src="sounds/move.mp3"></source>
 	<source src="sounds/yahoo.mp3"></source>
@@ -27,44 +28,54 @@
 <script src="https://www.gstatic.com/firebasejs/5.5.9/firebase.js"></script>
 <script>
   var config = {
-      apiKey: "AIzaSyB-No8CS--U7iNvPlJldCt_iIcAsDaYPQE",
-      authDomain: "chesss.firebaseapp.com",
-      databaseURL: "https://chesss.firebaseio.com",
-      projectId: "chesss",
-      storageBucket: "chesss.appspot.com",
-      messagingSenderId: "302245951392"
+      apikey: "aizasyb-no8cs--u7invpljldct_iicasdaypqe",
+      authdomain: "chesss.firebaseapp.com",
+      databaseurl: "https://chesss.firebaseio.com",
+      projectid: "chesss",
+      storagebucket: "chesss.appspot.com",
+      messagingsenderid: "302245951392"
   };
-  firebase.initializeApp(config);
+  firebase.initializeapp(config);
 
-  $("#signOut").click(function(){
-	firebase.auth().signOut().then(function() {
+  function timer() {
+      $("#time").html("time left to make a move: " + timeleft--);
+      if (timeleft === 0) {
+          firebase.database().ref().update({
+              status : localstorage.email +"'s time ended which means.. you win!"
+          }).then (function(){
+              settimeout($("#signout").trigger("click"), 10000);
+          });
+      }
+  }
+  $("#signout").click(function(){
+	firebase.auth().signout().then(function() {
         firebase.database().ref().once('value').then(function(snapshot) {
-            if (localStorage.email === snapshot.child('white_name').val()) {
+            if (localstorage.email === snapshot.child('white_name').val()) {
                 firebase.database().ref().update({
                     num_players : snapshot.child('num_players').val()-1     ,
                     white_name  : ""                                        ,
-                    status     : snapshot.child('num_players').val()-1 === 0 ? "" : localStorage.email + " has left the game",
-                    board_state : 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+                    status     : snapshot.child('num_players').val()-1 === 0 ? "" : localstorage.email + " has left the game",
+                    board_state : 'rnbqkbnr/pppppppp/8/8/8/8/pppppppp/rnbqkbnr w kqkq - 0 1',
                     turn        : 'white'
                 }).then(function(){
-                    localStorage.email = undefined;
+                    localstorage.email = undefined;
                     location.href = "login.html";
                 }).catch(function(error){
                     alert(error.message);
                 });
-            } else if (localStorage.email === snapshot.child('black_name').val()){
+            } else if (localstorage.email === snapshot.child('black_name').val()){
                 firebase.database().ref().update({
                     num_players : snapshot.child('num_players').val()-1     ,
                     black_name  : ""                                        ,
-                    status     : snapshot.child('num_players').val()-1 === 0 ? "" : localStorage.email + " has left the game",
+                    status     : snapshot.child('num_players').val()-1 === 0 ? "" : localstorage.email + " has left the game",
                 }).then(function(){
-                    localStorage.email = undefined;
+                    localstorage.email = undefined;
                     location.href = "login.html";
                 }).catch(function(error){
                     alert(error.message);
                 });
             } else {
-                localStorage.email = undefined;
+                localstorage.email = undefined;
                 location.href = 'login.html';
             }
         });
@@ -79,6 +90,13 @@
 <script>
     firebase.database().ref().child('turn').on('value', function(snapshot) {
         turn = snapshot.val() === 'white' ? 'w' : 'b';
+        timeLeft = 60;
+        var f;
+        if (snapshot.val() === localStorage.color) {
+            f = setInterval(timer, 1000);
+        } else {
+            clearInterval(f);
+        }
     });
     firebase.database().ref().child('status').on('value', function(snapshot) {
         $("#result").html(snapshot.val());
@@ -190,8 +208,13 @@ var init = function() {
         location.href = 'login.html';
         return;
     }
-    firebase.database().ref().child('board_state').once('value').then(function (snapshot) {
-        position = snapshot.val();
+    firebase.database().ref().once('value').then(function (snapshot) {
+        position = snapshot.child('board_state').val();
+
+        $("#players").html(snapshot.child('white_player').val() + " against" +(snapshot.child('num_players').val() === 1 ? " waiting for black player":
+                                                                        localStorage.email));
+
+
         start_game();
     });
 };
@@ -204,5 +227,6 @@ firebase.database().ref().child('board_state').on('value', function(snapshot) {
 });
 $(document).ready(init);
 </script>
+<div id="time" class="text-lg-center"></div>
 </body>
 </html>
