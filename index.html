@@ -27,57 +27,45 @@
 
 <script src="https://www.gstatic.com/firebasejs/5.5.9/firebase.js"></script>
 <script>
+  var f;
   var config = {
-      apikey: "aizasyb-no8cs--u7invpljldct_iicasdaypqe",
-      authdomain: "chesss.firebaseapp.com",
-      databaseurl: "https://chesss.firebaseio.com",
-      projectid: "chesss",
-      storagebucket: "chesss.appspot.com",
-      messagingsenderid: "302245951392"
+      apiKey: "AIzaSyB-No8CS--U7iNvPlJldCt_iIcAsDaYPQE",
+      authDomain: "chesss.firebaseapp.com",
+      databaseURL: "https://chesss.firebaseio.com",
+      projectId: "chesss",
+      storageBucket: "chesss.appspot.com",
+      messagingSenderId: "302245951392"
   };
-  firebase.initializeapp(config);
+  firebase.initializeApp(config);
 
   function timer() {
-      $("#time").html("time left to make a move: " + timeleft--);
-      if (timeleft === 0) {
+      $("#time").html("time left to make a move: " + timeLeft--);
+      if (timeLeft === 0) {
           firebase.database().ref().update({
-              status : localstorage.email +"'s time ended which means.. you win!"
+              status : localStorage.email +"'s time ended which means.. you win!"
           }).then (function(){
-              settimeout($("#signout").trigger("click"), 10000);
+              clearInterval(this);
+              setTimeout($("#signOut").trigger("click"), 10000);
           });
       }
   }
-  $("#signout").click(function(){
-	firebase.auth().signout().then(function() {
+  $("#signOut").click(function(){
+	firebase.auth().signOut().then(function() {
         firebase.database().ref().once('value').then(function(snapshot) {
-            if (localstorage.email === snapshot.child('white_name').val()) {
-                firebase.database().ref().update({
-                    num_players : snapshot.child('num_players').val()-1     ,
-                    white_name  : ""                                        ,
-                    status     : snapshot.child('num_players').val()-1 === 0 ? "" : localstorage.email + " has left the game",
-                    board_state : 'rnbqkbnr/pppppppp/8/8/8/8/pppppppp/rnbqkbnr w kqkq - 0 1',
-                    turn        : 'white'
-                }).then(function(){
-                    localstorage.email = undefined;
-                    location.href = "login.html";
-                }).catch(function(error){
-                    alert(error.message);
-                });
-            } else if (localstorage.email === snapshot.child('black_name').val()){
-                firebase.database().ref().update({
-                    num_players : snapshot.child('num_players').val()-1     ,
-                    black_name  : ""                                        ,
-                    status     : snapshot.child('num_players').val()-1 === 0 ? "" : localstorage.email + " has left the game",
-                }).then(function(){
-                    localstorage.email = undefined;
-                    location.href = "login.html";
-                }).catch(function(error){
-                    alert(error.message);
-                });
-            } else {
-                localstorage.email = undefined;
-                location.href = 'login.html';
-            }
+            firebase.database().ref().update({
+                num_players : snapshot.child('num_players').val()-1,
+                white_name  : snapshot.child('white_name').val() === localStorage.email ? "" : snapshot.child('white_name').val(),
+                black_name  : snapshot.child('black_name').val() === localStorage.email ? "" : snapshot.child('black_name').val(),
+                status      : localStorage.email === "viewer" ? snapshot.child('status').val() : (snapshot.child('num_players').val()-1 === 0 ? "" : localStorage.email + " has left the game"),
+                board_state : snapshot.child('num_players').val()-1 === 0 ? 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1' : snapshot.child('board_state').val(),
+                turn        : snapshot.child('num_players').val()-1 === 0 ? 'white' : turn
+            }).then(function(){
+                localStorage.email = undefined;
+                localStorage.connected = undefined;
+                location.href = "login.html";
+            }).catch(function(error){
+                alert(error.message);
+            });
         });
     }).catch (function(error) {
         alert(error.message);
@@ -91,10 +79,10 @@
     firebase.database().ref().child('turn').on('value', function(snapshot) {
         turn = snapshot.val() === 'white' ? 'w' : 'b';
         timeLeft = 60;
-        var f;
         if (snapshot.val() === localStorage.color) {
             f = setInterval(timer, 1000);
         } else {
+            $("#time").html("");
             clearInterval(f);
         }
     });
@@ -149,10 +137,6 @@ start_game = function(){
         board.position(game.fen());
     };
 
-    var showPlayers = function() {
-        FirebaseDatabase.getInstance().getReference("server/saving-data/fireblog/posts");
-    };
-
     var updateStatus = function() {
         var status = '';
 
@@ -204,23 +188,13 @@ start_game = function(){
 }; // end init()
 var position = 'start';
 var init = function() {
-    if ("undefined" === localStorage.email) {
+    if ("undefined" === localStorage.email || localStorage.connected !== "undefined") {
         location.href = 'login.html';
         return;
     }
-    firebase.database().ref().once('value').then(function (snapshot) {
-        position = snapshot.child('board_state').val();
-
-        $("#players").html(snapshot.child('white_player').val() + " against" +(snapshot.child('num_players').val() === 1 ? " waiting for black player":
-                                                                        localStorage.email));
-
-
-        start_game();
-    });
+    localStorage.connected = true;
+    start_game();
 };
-//position = 'rnbqkbnr/ppp2ppp/3p4/4p3/3PP3/8/PPP2PPP/RNBQKBNR w KQkq - 0 3';
-//init();
-//unmark to start from a different position
 firebase.database().ref().child('board_state').on('value', function(snapshot) {
     position = snapshot.val();
     start_game();

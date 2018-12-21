@@ -118,13 +118,20 @@
           messagingSenderId: "302245951392"
       };
       firebase.initializeApp(config);
+
+      $( window ).unload(function() {
+          return "Bye now!";
+      });
     </script>
 
-
-	
 	<script>
 
 	$(document).ready(function(){
+        if (localStorage.email !== "undefined") {
+            alert('you are already connected in this browser');
+            close();
+            return;
+        }
 		var state = "login";
         firebase.database().ref().child('num_players').once('value').then(function(snapshot) {
             if (snapshot.val() === 2) {
@@ -170,11 +177,6 @@
 
 		firebase.auth().onAuthStateChanged(function(user) {
 			if (user) {
-			    if (localStorage.email !== "undefined") {
-			        alert('you are already connected in this browser');
-			        close();
-			        return;
-				}
 				var displayName = user.displayName;
                 firebase.database().ref().child('num_players').once('value').then(function(snapshot) {
                     console.log('number of players:     ' + snapshot.val());
